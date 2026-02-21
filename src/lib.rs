@@ -24,6 +24,7 @@
 //! ```
 
 pub mod error;
+pub(crate) mod http_client;
 pub mod resources;
 pub mod version;
 
