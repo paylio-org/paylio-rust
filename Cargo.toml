@@ -2,7 +2,7 @@
 name = "paylio"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.85"
+rust-version = "1.87"
 description = "Rust client library for the Paylio subscription API"
 license = "MIT"
 repository = "https://github.com/paylio-org/paylio-rust"
