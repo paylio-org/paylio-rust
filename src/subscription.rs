@@ -24,13 +24,11 @@ pub struct CancelOptions {
 }
 
 /// Service for managing subscriptions.
-#[allow(dead_code)]
 pub struct SubscriptionService {
     client: Arc<HttpClient>,
 }
 
 impl SubscriptionService {
-    #[allow(dead_code)]
     pub(crate) fn new(client: Arc<HttpClient>) -> Self {
         Self { client }
     }

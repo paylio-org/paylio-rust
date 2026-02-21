@@ -23,12 +23,14 @@
 //! }
 //! ```
 
+pub mod client;
 pub mod error;
 pub(crate) mod http_client;
 pub mod resources;
 pub mod subscription;
 pub mod version;
 
+pub use client::{Client, ClientBuilder};
 pub use error::PaylioError;
 pub use resources::{
     PaginatedList, Period, Plan, Subscription, SubscriptionCancel, SubscriptionHistoryItem,
