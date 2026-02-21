@@ -47,8 +47,8 @@ pub struct SubscriptionHistoryItem {
     pub id: String,
     pub user_id: String,
     pub plan_slug: String,
-    pub plan_name: String,
-    pub plan_amount: f64,
+    pub plan_name: Option<String>,
+    pub plan_amount: Option<f64>,
     pub plan_currency: String,
     pub plan_interval: String,
     pub status: String,
@@ -219,7 +219,8 @@ mod tests {
         let item: SubscriptionHistoryItem = serde_json::from_str(json).unwrap();
         assert_eq!(item.id, "sub_hist_1");
         assert_eq!(item.plan_slug, "pro");
-        assert!((item.plan_amount - 19.99).abs() < f64::EPSILON);
+        assert_eq!(item.plan_name, Some("Pro Plan".to_string()));
+        assert!((item.plan_amount.unwrap() - 19.99).abs() < f64::EPSILON);
     }
 
     #[test]
@@ -299,6 +300,26 @@ mod tests {
             total_pages: 1,
         };
         assert!(!list.has_more());
+    }
+
+    #[test]
+    fn test_subscription_history_item_without_optional_fields() {
+        let json = r#"{
+            "id": "sub_hist_2",
+            "user_id": "user_1",
+            "plan_slug": "pro",
+            "plan_currency": "usd",
+            "plan_interval": "month",
+            "status": "active",
+            "current_period_start": "2026-01-01T00:00:00Z",
+            "current_period_end": "2026-02-01T00:00:00Z",
+            "created_at": "2025-12-01T00:00:00Z"
+        }"#;
+        let item: SubscriptionHistoryItem = serde_json::from_str(json).unwrap();
+        assert_eq!(item.id, "sub_hist_2");
+        assert_eq!(item.plan_slug, "pro");
+        assert!(item.plan_name.is_none());
+        assert!(item.plan_amount.is_none());
     }
 
     #[test]
