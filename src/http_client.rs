@@ -8,9 +8,11 @@ use crate::error::{error_for_status, PaylioError};
 use crate::version::VERSION;
 
 /// Default base URL for the Paylio API.
+#[allow(dead_code)]
 pub const DEFAULT_BASE_URL: &str = "https://api.paylio.pro/flying/v1";
 
 /// Default request timeout (30 seconds).
+#[allow(dead_code)]
 pub const DEFAULT_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Options for an HTTP request.
@@ -20,6 +22,7 @@ pub(crate) struct RequestOptions {
 }
 
 /// Internal HTTP client for making API requests.
+#[allow(dead_code)]
 pub(crate) struct HttpClient {
     api_key: String,
     base_url: String,
@@ -27,6 +30,7 @@ pub(crate) struct HttpClient {
 }
 
 impl HttpClient {
+    #[allow(dead_code)]
     pub fn new(api_key: &str, base_url: &str, timeout: Duration) -> Self {
         let client = reqwest::Client::builder()
             .timeout(timeout)

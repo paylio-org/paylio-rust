@@ -26,10 +26,12 @@
 pub mod error;
 pub(crate) mod http_client;
 pub mod resources;
+pub mod subscription;
 pub mod version;
 
 pub use error::PaylioError;
 pub use resources::{
     PaginatedList, Period, Plan, Subscription, SubscriptionCancel, SubscriptionHistoryItem,
 };
+pub use subscription::{CancelOptions, ListOptions, SubscriptionService};
 pub use version::VERSION;
