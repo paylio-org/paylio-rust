@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: cargo fmt
+        run: cargo fmt --all --check
+      - name: cargo clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+  test:
+    name: Test (Rust ${{ matrix.rust }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        rust: ["1.75", "stable"]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
+      - name: Run tests
+        run: cargo test --all-features
+      - name: Check coverage (stable only)
+        if: matrix.rust == 'stable'
+        run: |
+          cargo install cargo-tarpaulin --locked
+          COVERAGE=$(cargo tarpaulin --out Stdout --skip-clean 2>&1 | grep -oP '[\d.]+(?=% coverage)')
+          echo "Coverage: ${COVERAGE}%"
+          THRESHOLD=99
+          if [ "$(echo "$COVERAGE < $THRESHOLD" | bc)" -eq 1 ]; then
+            echo "Coverage ${COVERAGE}% is below ${THRESHOLD}%"
+            exit 1
+          fi
+
+  security:
+    name: Security
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - name: cargo audit
+        run: |
+          cargo install cargo-audit --locked
+          cargo audit
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build
+        run: cargo build --all-features
