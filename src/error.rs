@@ -449,4 +449,49 @@ mod tests {
         assert_eq!(cloned.message(), "test");
         assert_eq!(cloned.http_status(), Some(500));
     }
+
+    #[test]
+    fn test_http_body_none_for_connection_error() {
+        let err = PaylioError::ApiConnection {
+            message: "timeout".into(),
+        };
+        assert_eq!(err.http_body(), None);
+    }
+
+    #[test]
+    fn test_rate_limit_http_status() {
+        let err = PaylioError::RateLimit {
+            message: "slow".into(),
+            http_status: Some(429),
+            http_body: Some("body".into()),
+            code: Some("rate_limit".into()),
+        };
+        assert_eq!(err.http_status(), Some(429));
+        assert_eq!(err.http_body(), Some("body"));
+        assert_eq!(err.code(), Some("rate_limit"));
+    }
+
+    #[test]
+    fn test_not_found_accessors() {
+        let err = PaylioError::NotFound {
+            message: "missing".into(),
+            http_status: Some(404),
+            http_body: Some("{\"error\":\"not found\"}".into()),
+            code: Some("not_found".into()),
+        };
+        assert_eq!(err.http_body(), Some("{\"error\":\"not found\"}"));
+        assert_eq!(err.code(), Some("not_found"));
+    }
+
+    #[test]
+    fn test_authentication_accessors() {
+        let err = PaylioError::Authentication {
+            message: "bad key".into(),
+            http_status: Some(401),
+            http_body: Some("auth body".into()),
+            code: Some("auth_err".into()),
+        };
+        assert_eq!(err.http_body(), Some("auth body"));
+        assert_eq!(err.code(), Some("auth_err"));
+    }
 }

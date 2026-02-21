@@ -149,6 +149,13 @@ mod tests {
         let _svc = client.subscriptions();
     }
 
+    #[test]
+    fn test_client_debug() {
+        let client = Client::new("sk_test_abc").unwrap();
+        let debug = format!("{:?}", client);
+        assert!(debug.contains("Client"));
+    }
+
     #[tokio::test]
     async fn test_client_retrieve_via_wiremock() {
         use wiremock::matchers::{header, method, path};
