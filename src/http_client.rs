@@ -65,7 +65,8 @@ impl HttpClient {
             .header("X-API-Key", &self.api_key)
             .header("Content-Type", "application/json")
             .header("Accept", "application/json")
-            .header("User-Agent", format!("paylio-rust/{}", VERSION));
+            .header("User-Agent", format!("paylio-rust/{}", VERSION))
+            .header("X-SDK-Source", "rust");
 
         // Add JSON body if provided
         if let Some(opts) = opts {
@@ -164,6 +165,7 @@ mod tests {
             .and(header("X-API-Key", "sk_test_abc"))
             .and(header("Content-Type", "application/json"))
             .and(header("Accept", "application/json"))
+            .and(header("X-SDK-Source", "rust"))
             .respond_with(ResponseTemplate::new(200).set_body_json(serde_json::json!({"ok": true})))
             .mount(&server)
             .await;
