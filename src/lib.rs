@@ -22,3 +22,6 @@
 //!     Ok(())
 //! }
 //! ```
+
+pub mod error;
+pub use error::PaylioError;
