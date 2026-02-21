@@ -24,7 +24,11 @@
 //! ```
 
 pub mod error;
+pub mod resources;
 pub mod version;
 
 pub use error::PaylioError;
+pub use resources::{
+    PaginatedList, Period, Plan, Subscription, SubscriptionCancel, SubscriptionHistoryItem,
+};
 pub use version::VERSION;
