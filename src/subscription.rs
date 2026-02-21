@@ -103,7 +103,7 @@ impl SubscriptionService {
             });
         }
 
-        let cancel_at_period_end = opts.map_or(true, |o| !o.cancel_now);
+        let cancel_at_period_end = opts.is_none_or(|o| !o.cancel_now);
 
         let request_opts = RequestOptions {
             params: None,
