@@ -1,3 +1,174 @@
+use std::fmt;
+
+/// Error types returned by the Paylio SDK.
+///
+/// Each variant corresponds to a specific category of API error,
+/// mapped from HTTP status codes.
+#[derive(Debug, Clone)]
+pub enum PaylioError {
+    /// Invalid or missing API key (HTTP 401).
+    Authentication {
+        message: String,
+        http_status: Option<u16>,
+        http_body: Option<String>,
+        code: Option<String>,
+    },
+    /// Bad request parameters (HTTP 400).
+    InvalidRequest {
+        message: String,
+        http_status: Option<u16>,
+        http_body: Option<String>,
+        code: Option<String>,
+    },
+    /// Resource not found (HTTP 404).
+    NotFound {
+        message: String,
+        http_status: Option<u16>,
+        http_body: Option<String>,
+        code: Option<String>,
+    },
+    /// Rate limit exceeded (HTTP 429).
+    RateLimit {
+        message: String,
+        http_status: Option<u16>,
+        http_body: Option<String>,
+        code: Option<String>,
+    },
+    /// Generic API error (HTTP 5xx or unrecognized status).
+    Api {
+        message: String,
+        http_status: Option<u16>,
+        http_body: Option<String>,
+        code: Option<String>,
+    },
+    /// Network or connection error (timeout, DNS failure, etc.).
+    ApiConnection { message: String },
+}
+
+impl fmt::Display for PaylioError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.message())
+    }
+}
+
+impl std::error::Error for PaylioError {}
+
+impl PaylioError {
+    /// Returns the error message.
+    pub fn message(&self) -> &str {
+        match self {
+            Self::Authentication { message, .. }
+            | Self::InvalidRequest { message, .. }
+            | Self::NotFound { message, .. }
+            | Self::RateLimit { message, .. }
+            | Self::Api { message, .. }
+            | Self::ApiConnection { message } => message,
+        }
+    }
+
+    /// Returns the HTTP status code, if available.
+    pub fn http_status(&self) -> Option<u16> {
+        match self {
+            Self::Authentication { http_status, .. }
+            | Self::InvalidRequest { http_status, .. }
+            | Self::NotFound { http_status, .. }
+            | Self::RateLimit { http_status, .. }
+            | Self::Api { http_status, .. } => *http_status,
+            Self::ApiConnection { .. } => None,
+        }
+    }
+
+    /// Returns the raw HTTP response body, if available.
+    pub fn http_body(&self) -> Option<&str> {
+        match self {
+            Self::Authentication { http_body, .. }
+            | Self::InvalidRequest { http_body, .. }
+            | Self::NotFound { http_body, .. }
+            | Self::RateLimit { http_body, .. }
+            | Self::Api { http_body, .. } => http_body.as_deref(),
+            Self::ApiConnection { .. } => None,
+        }
+    }
+
+    /// Returns the error code from the API response, if available.
+    pub fn code(&self) -> Option<&str> {
+        match self {
+            Self::Authentication { code, .. }
+            | Self::InvalidRequest { code, .. }
+            | Self::NotFound { code, .. }
+            | Self::RateLimit { code, .. }
+            | Self::Api { code, .. } => code.as_deref(),
+            Self::ApiConnection { .. } => None,
+        }
+    }
+
+    pub fn is_authentication(&self) -> bool {
+        matches!(self, Self::Authentication { .. })
+    }
+
+    pub fn is_invalid_request(&self) -> bool {
+        matches!(self, Self::InvalidRequest { .. })
+    }
+
+    pub fn is_not_found(&self) -> bool {
+        matches!(self, Self::NotFound { .. })
+    }
+
+    pub fn is_rate_limit(&self) -> bool {
+        matches!(self, Self::RateLimit { .. })
+    }
+
+    pub fn is_api(&self) -> bool {
+        matches!(self, Self::Api { .. })
+    }
+
+    pub fn is_api_connection(&self) -> bool {
+        matches!(self, Self::ApiConnection { .. })
+    }
+}
+
+/// Maps an HTTP status code to the appropriate error variant.
+pub(crate) fn error_for_status(
+    status: u16,
+    message: String,
+    http_body: Option<String>,
+    code: Option<String>,
+) -> PaylioError {
+    let http_status = Some(status);
+    match status {
+        401 => PaylioError::Authentication {
+            message,
+            http_status,
+            http_body,
+            code,
+        },
+        400 => PaylioError::InvalidRequest {
+            message,
+            http_status,
+            http_body,
+            code,
+        },
+        404 => PaylioError::NotFound {
+            message,
+            http_status,
+            http_body,
+            code,
+        },
+        429 => PaylioError::RateLimit {
+            message,
+            http_status,
+            http_body,
+            code,
+        },
+        _ => PaylioError::Api {
+            message,
+            http_status,
+            http_body,
+            code,
+        },
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -228,7 +399,12 @@ mod tests {
 
     #[test]
     fn test_error_for_status_400() {
-        let err = error_for_status(400, "bad request".into(), Some("body".into()), Some("code".into()));
+        let err = error_for_status(
+            400,
+            "bad request".into(),
+            Some("body".into()),
+            Some("code".into()),
+        );
         assert!(err.is_invalid_request());
         assert_eq!(err.http_status(), Some(400));
         assert_eq!(err.http_body(), Some("body"));
