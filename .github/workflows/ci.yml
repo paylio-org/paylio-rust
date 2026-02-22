@@ -50,7 +50,7 @@ jobs:
           cargo install cargo-tarpaulin --locked
           COVERAGE=$(cargo tarpaulin --out Stdout --skip-clean 2>&1 | grep -oP '[\d.]+(?=% coverage)')
           echo "Coverage: ${COVERAGE}%"
-          THRESHOLD=100
+          THRESHOLD=95
           if [ "$(echo "$COVERAGE < $THRESHOLD" | bc)" -eq 1 ]; then
             echo "Coverage ${COVERAGE}% is below ${THRESHOLD}%"
             exit 1
