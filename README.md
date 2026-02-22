@@ -1,10 +1,17 @@
 # Paylio Rust SDK
 
-Official Rust client library for the [Paylio API](https://paylio.pro).
+[![Crates.io](https://img.shields.io/crates/v/paylio.svg)](https://crates.io/crates/paylio)
+[![CI](https://github.com/paylio-org/paylio-rust/actions/workflows/ci.yml/badge.svg)](https://github.com/paylio-org/paylio-rust/actions/workflows/ci.yml)
+
+The Paylio Rust SDK provides convenient access to the Paylio API from applications written in Rust.
+
+## Documentation
+
+See the [Paylio API docs](https://paylio.pro/docs).
 
 ## Requirements
 
-- Rust 1.75 or later
+- Rust 1.75+
 - Tokio async runtime
 
 ## Installation
@@ -26,7 +33,7 @@ use paylio::Client;
 async fn main() -> Result<(), paylio::PaylioError> {
     let client = Client::new("sk_live_xxx")?;
 
-    // Retrieve a subscription
+    // Retrieve current subscription
     let sub = client.subscriptions().retrieve("user_123").await?;
     println!("Status: {}", sub.status);
     println!("Plan: {} ({})", sub.plan.name, sub.plan.slug);
@@ -35,83 +42,44 @@ async fn main() -> Result<(), paylio::PaylioError> {
 }
 ```
 
-### List Subscription History
+### List subscription history
 
 ```rust
 use paylio::{Client, ListOptions};
 
-#[tokio::main]
-async fn main() -> Result<(), paylio::PaylioError> {
-    let client = Client::new("sk_live_xxx")?;
+let client = Client::new("sk_live_xxx")?;
 
-    // List with default pagination (page 1, page_size 20)
-    let list = client.subscriptions().list("user_123", None).await?;
-    println!("Total: {}, Page: {}/{}", list.total, list.page, list.total_pages);
+// Default pagination
+let list = client.subscriptions().list("user_123", None).await?;
+println!("Total: {}, Page: {}/{}", list.total, list.page, list.total_pages);
 
-    for item in &list.items {
-        println!("  {} - {} ({})", item.id, item.status, item.plan_slug);
-    }
-
-    // List with custom pagination
-    let opts = ListOptions { page: Some(2), page_size: Some(5) };
-    let page2 = client.subscriptions().list("user_123", Some(&opts)).await?;
-    println!("Has more: {}", page2.has_more());
-
-    Ok(())
+for item in &list.items {
+    println!("  {} — {} ({})", item.id, item.status, item.plan_slug);
 }
+
+// Custom pagination
+let opts = ListOptions { page: Some(2), page_size: Some(5) };
+let page2 = client.subscriptions().list("user_123", Some(&opts)).await?;
+println!("Has more: {}", page2.has_more());
 ```
 
-### Cancel a Subscription
+### Cancel a subscription
 
 ```rust
 use paylio::{Client, CancelOptions};
 
-#[tokio::main]
-async fn main() -> Result<(), paylio::PaylioError> {
-    let client = Client::new("sk_live_xxx")?;
+let client = Client::new("sk_live_xxx")?;
 
-    // Cancel at end of period (default)
-    let result = client.subscriptions().cancel("sub_xxx", None).await?;
-    println!("Canceled: {}", result.success);
+// Cancel at end of billing period (safe default)
+let result = client.subscriptions().cancel("sub_uuid", None).await?;
+println!("Canceled: {}", result.success);
 
-    // Cancel immediately
-    let opts = CancelOptions { cancel_now: true };
-    let result = client.subscriptions().cancel("sub_xxx", Some(&opts)).await?;
-    println!("Canceled: {}", result.success);
-
-    Ok(())
-}
+// Cancel immediately
+let opts = CancelOptions { cancel_now: true };
+let result = client.subscriptions().cancel("sub_uuid", Some(&opts)).await?;
 ```
 
-### Error Handling
-
-```rust
-use paylio::{Client, PaylioError};
-
-#[tokio::main]
-async fn main() {
-    let client = Client::new("sk_live_xxx").unwrap();
-
-    match client.subscriptions().retrieve("user_123").await {
-        Ok(sub) => println!("Status: {}", sub.status),
-        Err(e) => {
-            println!("Error: {}", e);
-            if e.is_authentication() {
-                println!("Check your API key");
-            } else if e.is_not_found() {
-                println!("Subscription not found");
-            } else if e.is_rate_limit() {
-                println!("Rate limited, try again later");
-            }
-            if let Some(status) = e.http_status() {
-                println!("HTTP status: {}", status);
-            }
-        }
-    }
-}
-```
-
-### Custom Configuration
+### Configuration
 
 ```rust
 use paylio::Client;
@@ -123,16 +91,48 @@ let client = Client::builder("sk_live_xxx")
     .build()?;
 ```
 
-## Error Types
+### Error handling
 
-| HTTP Status | Error Variant | Description |
-|---|---|---|
+```rust
+use paylio::{Client, PaylioError};
+
+let client = Client::new("sk_live_xxx")?;
+
+match client.subscriptions().retrieve("user_123").await {
+    Ok(sub) => println!("Status: {}", sub.status),
+    Err(e) => {
+        println!("Error: {}", e);
+        if e.is_authentication() {
+            println!("Check your API key");
+        } else if e.is_not_found() {
+            println!("Subscription not found");
+        } else if e.is_rate_limit() {
+            println!("Rate limited, try again later");
+        }
+        if let Some(status) = e.http_status() {
+            println!("HTTP status: {}", status);
+        }
+    }
+}
+```
+
+## Error types
+
+| HTTP Status | Variant | Description |
+|-------------|---------|-------------|
 | 401 | `PaylioError::Authentication` | Invalid or missing API key |
 | 400 | `PaylioError::InvalidRequest` | Bad request parameters |
 | 404 | `PaylioError::NotFound` | Resource not found |
 | 429 | `PaylioError::RateLimit` | Rate limit exceeded |
 | 5xx | `PaylioError::Api` | Server error |
 | Network | `PaylioError::ApiConnection` | Connection or timeout error |
+
+## Development
+
+```bash
+cargo test
+cargo clippy
+```
 
 ## License
 
